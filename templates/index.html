@@ -98,6 +98,9 @@
                 $('#status').text(msg.status);
             });
 
+            socket.on('disconnect', function(da){
+                $('#status').text('Lost server connection')
+            });
         });
     </script>
 

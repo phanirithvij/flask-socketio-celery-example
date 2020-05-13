@@ -1,24 +1,15 @@
-import os
 import random
 import time
 import uuid
-from flask import (
-    Flask,
-    request,
-    render_template,
-    session,
-    redirect,
-    url_for,
-    jsonify,
-    current_app
-)
+
+import requests
 from celery import Celery
-from flask_socketio import (
-    SocketIO,
-    emit,
-    disconnect
-)
-from requests import post
+from celery.utils.log import get_task_logger
+from flask import (Flask, current_app, jsonify, redirect, render_template,
+                   request, session, url_for)
+from flask_socketio import SocketIO, disconnect, emit
+
+logger = get_task_logger(__name__)
 
 app = Flask(__name__)
 app.debug = True
@@ -44,7 +35,7 @@ celery.conf.update(app.config)
 
 
 @celery.task(bind=True)
-def long_task(self, elementid, userid, url):
+def long_task(self, elementid, userid, url: str):
     """Background task that runs a long function with progress reports."""
     verb = ['Starting up', 'Booting', 'Repairing', 'Loading', 'Checking']
     adjective = ['master', 'radiant', 'silent', 'harmonic', 'fast']
@@ -58,13 +49,25 @@ def long_task(self, elementid, userid, url):
                                               random.choice(noun))
         meta = {'current': i, 'total': total, 'status': message,
                 'elementid': elementid, 'userid': userid}
-        post(url, json=meta)
-        time.sleep(0.5)
+        requests.post(url, json=meta)
+        logger.info(msg='#'*20+'Before'+'#'*20)
+        logger.info(msg=time.time())
+        time.sleep(1)
+        logger.info(msg=time.time())
+        logger.info(msg='#'*20+'After'+'#'*20)
 
     meta = {'current': 100, 'total': 100, 'status': 'Task completed!',
             'result': 42, 'elementid': elementid, 'userid': userid}
-    post(url, json=meta)
+    r = requests.post(url, json=meta)
+    if r.status_code == 404:
+        logger.info('client disconnected')
+        logger.info('should stop sending updates to the client')
     return meta
+
+
+def write_to_log(d):
+    with open('log.log', 'a') as logfile:
+        logfile.write(str(d)+'\n')
 
 
 @app.route('/clients', methods=['GET'])
@@ -82,10 +85,10 @@ def index():
 
 @app.route('/longtask', methods=['POST'])
 def longtask():
-    #from IPython.core.debugger import Tracer; Tracer()()
+    # from IPython.core.debugger import Tracer; Tracer()()
     elementid = request.json['elementid']
     userid = request.json['userid']
-    task = long_task.delay(elementid, userid, url_for('event', _external=True))
+    _ = long_task.delay(elementid, userid, url_for('event', _external=True))
     return jsonify({}), 202
 
 
@@ -127,5 +130,5 @@ def events_disconnect():
 
 
 if __name__ == '__main__':
-    #app.run(debug=True)
+    # app.run(debug=True)
     socketio.run(app)
