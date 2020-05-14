@@ -8,7 +8,7 @@ import signal
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from shutil import move
+from shutil import copyfile
 
 logfile = 'logs/latest.log'
 
@@ -18,6 +18,10 @@ print(f'[scripts/celery.py] Logging to {logfile}')
 
 Path(logfile).touch()
 assert Path(logfile).is_file()
+
+with open(logfile, 'w'):
+    pass
+
 
 command_args = \
     f'celery -E -A app.celery worker --loglevel=info -f {logfile}'.split(' ')
@@ -29,5 +33,5 @@ except KeyboardInterrupt:
     proc.send_signal(signal.SIGTERM)
     time = datetime.now()
     # rename the log file
-    move(logfile, f"logs/log{time}.log")
+    copyfile(logfile, f"logs/log{time}.log")
     exit(0)

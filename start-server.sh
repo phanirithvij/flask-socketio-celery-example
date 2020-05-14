@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# pip install virtualenv && virtualenv venv
+# pip install virtualenv &&
 
+virtualenv venv
 source venv/bin/activate
-# pip install -r requirements.txt
+pip install -r requirements.txt
 
 if ! [ -x "$(command -v redis-server)" ]; then
     echo 'Warning: redis is not installed or is not in the $PATH.' >&2
