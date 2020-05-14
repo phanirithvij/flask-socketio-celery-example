@@ -1,3 +1,4 @@
+#!/bin/bash
 source venv/bin/activate
 
 # https://stackoverflow.com/a/43929298/8608146

@@ -1,9 +1,10 @@
-pip install virtualenv && virtualenv venv
+#!/bin/bash
+
+# pip install virtualenv && virtualenv venv
 
 source venv/bin/activate
-pip install -r requirements.txt
+# pip install -r requirements.txt
 
-#!/bin/bash
 if ! [ -x "$(command -v redis-server)" ]; then
     echo 'Warning: redis is not installed or is not in the $PATH.' >&2
     curl -O http://download.redis.io/redis-stable.tar.gz
@@ -15,7 +16,6 @@ fi
 
 
 echo -e "\n\n\n -------------------------------------"
-echo 'Now run ./run-redis.sh ./run-celery.sh in seperate terminals'
-echo -e 'and start the app \n\n'
-echo 'source venv/bin/activate && python app.py'
-echo -e "------------------------------------- \n\n\n"
+x-terminal-emulator -e ./run-redis.sh &
+x-terminal-emulator -e ./run-celery.sh &
+source venv/bin/activate && python app.py
